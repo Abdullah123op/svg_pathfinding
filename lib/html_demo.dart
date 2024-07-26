@@ -157,6 +157,8 @@ class _DijkstraHomePageState extends State<DijkstraHomePage> {
         // Handle setting cost or label
         break;
       case null:
+      case WorkMode.findRoute:
+      // TODO: Handle this case.
     }
   }
 
@@ -268,7 +270,7 @@ class _DijkstraHomePageState extends State<DijkstraHomePage> {
   }
 }
 
-enum WorkMode { drawVertex, drawEdge, setStart, delVertexEdge, setCostLabel }
+enum WorkMode { drawVertex, drawEdge, setStart, delVertexEdge, setCostLabel, findRoute }
 
 class Vertex {
   final double x;
