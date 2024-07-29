@@ -65,10 +65,10 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   WorkMode? workMode = WorkMode.drawVertex;
 
   // Store the edges
-  final Map<String, List<String>> findEdges = {};
+  Map<String, List<String>> findEdges = {};
 
   // Store vertex positions
-  final Map<String, Offset> vertexPositions = {};
+  Map<String, Offset> vertexPositions = {};
 
   List<String> clickedVertices = [];
 
@@ -89,7 +89,6 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   }
 
   void _onTapDown(TapDownDetails details) {
-    final position = details.localPosition;
     final x = details.localPosition.dx;
     final y = details.localPosition.dy;
 
@@ -101,7 +100,6 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
         drawEdge(x, y);
         break;
       case WorkMode.findRoute:
-        handleFindRoute(x, y);
         break;
       case WorkMode.setStart:
         // Handle setting start vertex
@@ -171,8 +169,10 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
               path,
               style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
             ),
-            ButtonBar(
-              alignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              // alignment: MainAxisAlignment.center,
               children: <Widget>[
                 Radio(
                   value: WorkMode.drawVertex,
@@ -205,12 +205,39 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
                   },
                 ),
                 const Text('Find Route'),
+                TextButton(
+                    onPressed: () {
+                      clearData();
+                    },
+                    child: const Text('Clear')),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  void clearData() {
+    svgString = '''
+<svg width="$svgWidth" height="$svgHeight" xmlns="http://www.w3.org/2000/svg">
+ <rect x="0" y="0" width="$svgWidth" height="$svgHeight" fill="none" stroke="black" stroke-width="2"/>
+  <g id="gedge"></g>
+  <g id="gvertex"></g>
+</svg>
+  ''';
+
+    vertices = [];
+    edges = [];
+    startVertex;
+    selectedVertex;
+    edgeCost = 1;
+    workMode = WorkMode.drawVertex;
+    findEdges = {};
+    vertexPositions = {};
+    clickedVertices = [];
+    path = '';
+    setState(() {});
   }
 
   void drawVertex(double x, double y) {
@@ -256,8 +283,6 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
     }
   }
 
-  void handleFindRoute(double x, double y) {}
-
   void parseSvgVerticesAndEdges() {
     final document = xml.XmlDocument.parse(svgString);
     final circles = document.findAllElements('circle');
@@ -295,7 +320,7 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
         findEdges[endVertex]!.add(startVertex); // Assuming undirected graph
       }
     }
-    print('Edges: $findEdges');
+    Log.e('Edges: $findEdges');
   }
 
   String? getVertexId(double x, double y) {
@@ -312,15 +337,20 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   void onVertexClick(String vertex) {
     Log.e(vertex);
     setState(() {
-      clickedVertices.add(vertex);
-      if (clickedVertices.length > 1) {
-        String path = findPath(clickedVertices.first, clickedVertices.last);
-        this.path = path;
-        print(path);
-      } else {
-        print('error');
-      }
+      path = vertex;
     });
+
+    clickedVertices.add(vertex);
+    if (clickedVertices.length > 1) {
+      String path = findPath(clickedVertices.first, clickedVertices.last);
+      setState(() {
+        this.path = path;
+        clickedVertices.clear(); // Reset the list after finding a path
+      });
+      Log.e(path);
+    } else {
+      Log.e('error');
+    }
   }
 
   String findPath(String start, String end) {
@@ -362,7 +392,7 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
     final edgeElements = edges.map((e) {
       return '''
 <line x1="${e.from.x}" y1="${e.from.y}" x2="${e.to.x}" y2="${e.to.y}" stroke="skyblue" stroke-width="3"/>
-<text x="${(e.from.x + e.to.x) / 2}" y="${(e.from.y + e.to.y) / 2}" text-anchor="middle" alignment-baseline="central" font-size="12" fill="black">${e.cost}</text>
+<!-- <text x="${(e.from.x + e.to.x) / 2}" y="${(e.from.y + e.to.y) / 2}" text-anchor="middle" alignment-baseline="central" font-size="12" fill="black">${e.cost}</text> -->
       ''';
     }).join();
 
