@@ -1,7 +1,7 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:svg_pathfinding/utils/logger.dart';
+import 'package:xml/xml.dart' as xml;
 
 import 'html_demo.dart';
 
@@ -43,6 +43,7 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   ''';
 
   List<Vertex> vertices = [];
+
   // List<Vertex> vertices = [
   //   Vertex(218.74438339313542, 338.1165745765152, 'A'),
   //   Vertex(216.77128932398864, 201.79371161728358, 'B'),
@@ -51,6 +52,7 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   // ];
 
   List<Edge> edges = [];
+
   // List<Edge> edges = [
   //   Edge(Vertex(218.74438339313542, 338.1165745765152, 'A'), Vertex(216.77128932398864, 201.79371161728358, 'B'), 1),
   //   Edge(Vertex(216.77128932398864, 201.79371161728358, 'B'), Vertex(325.3811492211133, 192.28698564775823, 'C'), 1),
@@ -61,6 +63,16 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
   Vertex? selectedVertex;
   int edgeCost = 1;
   WorkMode? workMode = WorkMode.drawVertex;
+
+  // Store the edges
+  final Map<String, List<String>> findEdges = {};
+
+  // Store vertex positions
+  final Map<String, Offset> vertexPositions = {};
+
+  List<String> clickedVertices = [];
+
+  String path = '';
 
   @override
   void didChangeDependencies() {
@@ -74,80 +86,6 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
       _currentSvgContent = svgString; // Initialize with the original SVG content
       updateSvg();
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Log.e(svgString);
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTapDown: _onTapDown,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          SvgPicture.string(
-                            _currentSvgContent!,
-                            width: svgWidth,
-                            height: svgHeight,
-                          ),
-                          SvgPicture.string(
-                            svgString,
-                            width: svgWidth,
-                            height: svgHeight,
-                            fit: BoxFit.cover,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            ButtonBar(
-              alignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Radio(
-                  value: WorkMode.drawVertex,
-                  groupValue: workMode,
-                  onChanged: (WorkMode? value) {
-                    setState(() {
-                      workMode = value!;
-                    });
-                  },
-                ),
-                const Text('Draw vertex'),
-                Radio(
-                  value: WorkMode.drawEdge,
-                  groupValue: workMode,
-                  onChanged: (value) {
-                    setState(() {
-                      workMode = value;
-                    });
-                  },
-                ),
-                const Text('Draw edge'),
-                // Radio(
-                //   value: WorkMode.findRoute,
-                //   groupValue: workMode,
-                //   onChanged: (value) {
-                //     setState(() {
-                //       workMode = value;
-                //     });
-                //   },
-                // ),
-                // const Text('Find Route'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -176,6 +114,103 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
         break;
       case null:
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        body: Column(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTapDown: _onTapDown,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          SvgPicture.string(
+                            _currentSvgContent!,
+                            width: svgWidth,
+                            height: svgHeight,
+                          ),
+                          SvgPicture.string(
+                            svgString,
+                            width: svgWidth,
+                            height: svgHeight,
+                            fit: BoxFit.cover,
+                          ),
+                          if (workMode == WorkMode.findRoute)
+                            ...vertexPositions.entries.map((entry) {
+                              return Positioned(
+                                left: entry.value.dx - 10, // Adjust for center alignment
+                                top: entry.value.dy - 10, // Adjust for center alignment
+                                child: GestureDetector(
+                                  onTap: () => onVertexClick(entry.key),
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.red.withOpacity(0.5),
+                                      border: Border.all(color: Colors.transparent),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Text(
+              path,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            ButtonBar(
+              alignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Radio(
+                  value: WorkMode.drawVertex,
+                  groupValue: workMode,
+                  onChanged: (WorkMode? value) {
+                    setState(() {
+                      workMode = value!;
+                    });
+                  },
+                ),
+                const Text('Draw vertex'),
+                Radio(
+                  value: WorkMode.drawEdge,
+                  groupValue: workMode,
+                  onChanged: (value) {
+                    setState(() {
+                      workMode = value;
+                    });
+                  },
+                ),
+                const Text('Draw edge'),
+                Radio(
+                  value: WorkMode.findRoute,
+                  groupValue: workMode,
+                  onChanged: (value) {
+                    setState(() {
+                      parseSvgVerticesAndEdges();
+                      workMode = value!;
+                    });
+                  },
+                ),
+                const Text('Find Route'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void drawVertex(double x, double y) {
@@ -221,77 +256,99 @@ class _SvgOverlapingScreenState extends State<SvgOverlapingScreen> {
     }
   }
 
-  void handleFindRoute(double x, double y) {
-    final vertex = getVertexAt(x, y);
-    if (vertex != null) {
-      if (startVertex == null) {
-        startVertex = vertex;
-        Log.e('Start vertex selected: ${vertex.label}');
-      } else {
-        final endVertex = vertex;
-        final path = findShortestPath(startVertex!, endVertex);
-        Log.e('Path: ${path.map((v) => v.label).join(' -> ')}');
+  void handleFindRoute(double x, double y) {}
 
-        // Print the vertices in the path
-        for (var i = 0; i < path.length - 1; i++) {
-          Log.e('From ${path[i].label} to ${path[i + 1].label}');
-        }
+  void parseSvgVerticesAndEdges() {
+    final document = xml.XmlDocument.parse(svgString);
+    final circles = document.findAllElements('circle');
 
-        setState(() {
-          startVertex = null; // Reset the start vertex for the next route finding
-        });
+    for (var circle in circles) {
+      final cx = double.parse(circle.getAttribute('cx')!);
+      final cy = double.parse(circle.getAttribute('cy')!);
+      final textElement = circle.nextElementSibling;
+      final vertexId = textElement?.text;
+
+      if (vertexId != null) {
+        vertexPositions[vertexId] = Offset(cx, cy);
       }
     }
+
+    final lines = document.findAllElements('line');
+
+    for (var line in lines) {
+      final x1 = double.parse(line.getAttribute('x1')!);
+      final y1 = double.parse(line.getAttribute('y1')!);
+      final x2 = double.parse(line.getAttribute('x2')!);
+      final y2 = double.parse(line.getAttribute('y2')!);
+
+      final startVertex = getVertexId(x1, y1);
+      final endVertex = getVertexId(x2, y2);
+
+      if (startVertex != null && endVertex != null) {
+        if (!findEdges.containsKey(startVertex)) {
+          findEdges[startVertex] = [];
+        }
+        if (!findEdges.containsKey(endVertex)) {
+          findEdges[endVertex] = [];
+        }
+        findEdges[startVertex]!.add(endVertex);
+        findEdges[endVertex]!.add(startVertex); // Assuming undirected graph
+      }
+    }
+    print('Edges: $findEdges');
   }
 
-  List<Vertex> findShortestPath(Vertex start, Vertex end) {
-    final distances = <Vertex, double>{};
-    final previousVertices = <Vertex, Vertex?>{};
-    final unvisited = PriorityQueue<Vertex>((a, b) => distances[a]!.compareTo(distances[b]!));
-
-    // Initialize distances and previous vertices
-    for (var vertex in vertices) {
-      distances[vertex] = double.infinity;
-      previousVertices[vertex] = null;
-      unvisited.add(vertex);
+  String? getVertexId(double x, double y) {
+    // Find the vertex id based on coordinates
+    for (var entry in vertexPositions.entries) {
+      final pos = entry.value;
+      if ((pos.dx - x).abs() < 10 && (pos.dy - y).abs() < 10) {
+        return entry.key;
+      }
     }
-    distances[start] = 0;
+    return null;
+  }
 
-    while (unvisited.isNotEmpty) {
-      final current = unvisited.removeFirst();
-      if (current == end) break;
+  void onVertexClick(String vertex) {
+    Log.e(vertex);
+    setState(() {
+      clickedVertices.add(vertex);
+      if (clickedVertices.length > 1) {
+        String path = findPath(clickedVertices.first, clickedVertices.last);
+        this.path = path;
+        print(path);
+      } else {
+        print('error');
+      }
+    });
+  }
 
-      // Consider all edges connected to the current vertex
-      for (var edge in edges.where((e) => e.from == current || e.to == current)) {
-        final neighbor = edge.from == current ? edge.to : edge.from;
-        final newDist = distances[current]! + edge.cost;
+  String findPath(String start, String end) {
+    // Simple BFS for finding the path
+    final queue = <List<String>>[];
+    final visited = <String>{};
 
-        if (newDist < distances[neighbor]!) {
-          distances[neighbor] = newDist;
-          previousVertices[neighbor] = current;
-          // Ensure the priority queue is updated with new distances
-          unvisited.add(neighbor);
+    queue.add([start]);
+    visited.add(start);
+
+    while (queue.isNotEmpty) {
+      final path = queue.removeAt(0);
+      final vertex = path.last;
+
+      if (vertex == end) {
+        return path.join(' to ');
+      }
+
+      if (findEdges[vertex] != null) {
+        for (var neighbor in findEdges[vertex]!) {
+          if (!visited.contains(neighbor)) {
+            visited.add(neighbor);
+            queue.add(List<String>.from(path)..add(neighbor));
+          }
         }
       }
     }
-
-    // Reconstruct the path
-    final path = <Vertex>[];
-    Vertex? current = end;
-    while (current != null) {
-      path.insert(0, current);
-      current = previousVertices[current];
-    }
-
-    // Check if the path starts from the start vertex
-    if (path.isNotEmpty && path.first == start) {
-      Log.e('Path: ${path.map((v) => v.label).join(' -> ')}');
-    } else {
-      Log.e('No path found from ${start.label} to ${end.label}');
-      Log.e('Path: ${path.map((v) => v.label).join(' -> ')}');
-    }
-
-    return path;
+    return 'No path found';
   }
 
   void updateSvg() {
