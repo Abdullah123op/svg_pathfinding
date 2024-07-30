@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:svg_pathfinding/fetures/pathfinding/model/edges_vertex_workmode.dart';
 import 'package:svg_pathfinding/utils/logger.dart';
 
 var svgWidth = 400;
@@ -267,33 +268,5 @@ class _DijkstraHomePageState extends State<DijkstraHomePage> {
         const SnackBar(content: Text('Storage permission denied')),
       );
     }
-  }
-}
-
-enum WorkMode { drawVertex, drawEdge, setStart, delVertexEdge, setCostLabel, findRoute }
-
-class Vertex {
-  final double x;
-  final double y;
-  final String label;
-
-  Vertex(this.x, this.y, this.label);
-
-  @override
-  String toString() {
-    return 'Vertex(x: $x, y: $y, label: $label)';
-  }
-}
-
-class Edge {
-  final Vertex from;
-  final Vertex to;
-  final int cost;
-
-  Edge(this.from, this.to, this.cost);
-
-  @override
-  String toString() {
-    return 'Edge(from: $from, to: $to, cost: $cost)';
   }
 }
