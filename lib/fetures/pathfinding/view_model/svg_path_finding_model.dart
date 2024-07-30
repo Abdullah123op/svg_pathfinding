@@ -231,18 +231,18 @@ class SvgPathFindingModel with ChangeNotifier {
   }
 
   String findShortestPath(String start, String end) {
-    final distances = <String, double>{};
-    final previous = <String, String?>{};
-    final queue = PriorityQueue<MapEntry<String, double>>((a, b) => a.value.compareTo(b.value));
+    final distances = <String, double>{}; // Shortest distances from start
+    final previous = <String, String?>{}; // Previous node in the shortest path
+    final queue = PriorityQueue<MapEntry<String, double>>((a, b) => a.value.compareTo(b.value)); // Priority queue for the algorithm
 
-    distances[start] = 0;
-    queue.add(MapEntry(start, 0));
+    distances[start] = 0; // Initialize start node
+    queue.add(MapEntry(start, 0)); // Add start node to the queue
 
     while (queue.isNotEmpty) {
-      final current = queue.removeFirst().key;
+      final current = queue.removeFirst().key; // Get the node with the smallest distance
 
       if (current == end) {
-        final path = reconstructPath(previous, start, end);
+        final path = reconstructPath(previous, start, end); // Reconstruct the path from start to end
         Log.e('Path found: $path');
         Log.e('Path length: ${distances[end]}');
         return path;
@@ -250,41 +250,41 @@ class SvgPathFindingModel with ChangeNotifier {
 
       if (findEdges[current] != null) {
         for (var edge in findEdges[current]!) {
-          final neighbor = edge.from.label == current ? edge.to.label : edge.from.label;
-          final newDist = distances[current]! + euclideanDistance(current, neighbor);
+          final neighbor = edge.from.label == current ? edge.to.label : edge.from.label; // Find the neighboring vertex
+          final newDist = distances[current]! + euclideanDistance(current, neighbor); // Calculate new distance
 
           if (newDist < (distances[neighbor] ?? double.infinity)) {
-            distances[neighbor] = newDist;
-            previous[neighbor] = current;
-            final heuristicDist = newDist + euclideanDistance(neighbor, end);
-            queue.add(MapEntry(neighbor, heuristicDist));
+            distances[neighbor] = newDist; // Update shortest distance
+            previous[neighbor] = current; // Update previous node
+            final heuristicDist = newDist + euclideanDistance(neighbor, end); // Calculate heuristic distance
+            queue.add(MapEntry(neighbor, heuristicDist)); // Add neighbor to the queue with heuristic distance
           }
         }
       }
     }
-    return 'No path found';
+    return 'No path found'; // Return if no path is found
   }
 
   double euclideanDistance(String vertexLabel1, String vertexLabel2) {
-    final pos1 = vertexPositions[vertexLabel1]!;
-    final pos2 = vertexPositions[vertexLabel2]!;
-    return sqrt(pow(pos1.dx - pos2.dx, 2) + pow(pos1.dy - pos2.dy, 2));
+    final pos1 = vertexPositions[vertexLabel1]!; // Position of the first vertex
+    final pos2 = vertexPositions[vertexLabel2]!; // Position of the second vertex
+    return sqrt(pow(pos1.dx - pos2.dx, 2) + pow(pos1.dy - pos2.dy, 2)); // Calculate Euclidean distance
   }
 
   String reconstructPath(Map<String, String?> previous, String start, String end) {
-    final path = <String>[];
+    final path = <String>[]; // List to store the path
     String? current = end;
 
     while (current != null && current != start) {
-      path.add(current);
-      current = previous[current];
+      path.add(current); // Add current node to the path
+      current = previous[current]; // Move to the previous node
     }
 
     if (current == start) {
-      path.add(start);
-      return path.reversed.join(' to ');
+      path.add(start); // Add start node to the path
+      return path.reversed.join(' to '); // Return the path as a string
     } else {
-      return 'No path found';
+      return 'No path found'; // Return if no path is found
     }
   }
 
