@@ -9,7 +9,6 @@ import 'package:xml/xml.dart' as xml;
 
 class SvgPathFindingModel with ChangeNotifier {
   String svgAssetPath = 'assets/sample_svg.svg';
-  late String currentSvgContent;
 
   String svgString = '''
 <svg width="$svgWidth" height="$svgHeight" xmlns="http://www.w3.org/2000/svg">
@@ -69,8 +68,8 @@ class SvgPathFindingModel with ChangeNotifier {
   }
 
   Future<void> initialize(BuildContext context) async {
-    final String svgString = await DefaultAssetBundle.of(context).loadString(svgAssetPath);
-    currentSvgContent = svgString; // Initialize with the original SVG content
+    // final String svgString = await DefaultAssetBundle.of(context).loadString(svgAssetPath);
+    // currentSvgContent = svgString; // Initialize with the original SVG content
     updateSvg();
     notifyListeners();
   }

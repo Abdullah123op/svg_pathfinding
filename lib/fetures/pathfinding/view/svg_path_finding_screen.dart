@@ -45,8 +45,8 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                       Expanded(
                         child: Stack(
                           children: [
-                            SvgPicture.string(
-                              provider.currentSvgContent,
+                            SvgPicture.asset(
+                              'assets/sample_svg.svg',
                               width: svgWidth,
                               height: svgHeight,
                             ),
