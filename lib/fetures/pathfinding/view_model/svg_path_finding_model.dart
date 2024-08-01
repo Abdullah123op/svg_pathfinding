@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:svg_pathfinding/fetures/pathfinding/model/edges_vertex_workmode.dart';
 import 'package:svg_pathfinding/fetures/pathfinding/view/svg_path_finding_screen.dart';
 import 'package:svg_pathfinding/utils/logger.dart';
@@ -36,9 +37,18 @@ class SvgPathFindingModel with ChangeNotifier {
 
   String path = '';
 
+  Position? currentPosition;
+
+  // Define the geographic boundaries of your office
+  final double minLatitude = 22.991990;
+  final double maxLatitude = 22.992444;
+  final double minLongitude = 72.496957;
+  final double maxLongitude = 72.497742;
+
   // This function will call in the initState of stateful widget
   void initModel(BuildContext context) {
     initialize(context);
+    _getCurrentLocation();
   }
 
   // This function will call in the build of stateful widget
@@ -285,6 +295,74 @@ class SvgPathFindingModel with ChangeNotifier {
     } else {
       return 'No path found'; // Return if no path is found
     }
+  }
+
+// GPS Related code
+
+  void _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, don't continue
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, don't continue
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, don't continue
+      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can get the location
+    Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 1, // Set to 1 meter to get more frequent updates
+      ),
+    ).listen((Position position) {
+      Log.e("Current position: ${position.latitude}, ${position.longitude}");
+      currentPosition = position;
+      notifyListeners();
+    });
+  }
+
+  double calculateX(double longitude) {
+    // Office dimensions in pixels
+    double officeWidth = svgWidth; // Width of your SVG in pixels
+
+    // Clamp the longitude to the defined boundaries
+    double clampedLongitude = longitude.clamp(minLongitude, maxLongitude);
+    Log.e("Clamped Longitude: $clampedLongitude");
+
+    // Calculate the x-coordinate in the SVG based on the longitude
+    double x = ((clampedLongitude - minLongitude) / (maxLongitude - minLongitude)) * officeWidth;
+    Log.e("Longitude: $longitude, Calculated X: $x");
+    return x;
+  }
+
+  double calculateY(double latitude) {
+    // Office dimensions in pixels
+    double officeHeight = svgHeight; // Height of your SVG in pixels
+
+    // Clamp the latitude to the defined boundaries
+    double clampedLatitude = latitude.clamp(minLatitude, maxLatitude);
+    Log.e("Clamped Latitude: $clampedLatitude");
+
+    // Calculate the y-coordinate in the SVG based on the latitude
+    double y = officeHeight - ((clampedLatitude - minLatitude) / (maxLatitude - minLatitude)) * officeHeight;
+    Log.e("Latitude: $latitude, Calculated Y: $y");
+    return y;
   }
 
   void updateSvg() {

@@ -56,6 +56,11 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                               height: svgHeight,
                               fit: BoxFit.cover,
                             ),
+                            Positioned(
+                              left: provider.calculateX(provider.currentPosition!.longitude),
+                              top: provider.calculateY(provider.currentPosition!.latitude),
+                              child: const Icon(Icons.location_on_rounded, color: Color(0xFFFF0F00)),
+                            ),
                             if (provider.workMode == WorkMode.findRoute)
                               ...provider.vertexPositions.entries.map((entry) {
                                 return Positioned(
