@@ -237,6 +237,7 @@ class SvgPathFindingModel with ChangeNotifier {
 
       Log.e(path);
     }
+    updateSvg();
   }
 
   String findShortestPath(String start, String end) {
@@ -343,11 +344,11 @@ class SvgPathFindingModel with ChangeNotifier {
 
     // Clamp the longitude to the defined boundaries
     double clampedLongitude = longitude.clamp(minLongitude, maxLongitude);
-    Log.e("Clamped Longitude: $clampedLongitude");
+    // Log.e("Clamped Longitude: $clampedLongitude");
 
     // Calculate the x-coordinate in the SVG based on the longitude
     double x = ((clampedLongitude - minLongitude) / (maxLongitude - minLongitude)) * officeWidth;
-    Log.e("Longitude: $longitude, Calculated X: $x");
+    // Log.e("Longitude: $longitude, Calculated X: $x");
     return x;
   }
 
@@ -357,11 +358,11 @@ class SvgPathFindingModel with ChangeNotifier {
 
     // Clamp the latitude to the defined boundaries
     double clampedLatitude = latitude.clamp(minLatitude, maxLatitude);
-    Log.e("Clamped Latitude: $clampedLatitude");
+    // Log.e("Clamped Latitude: $clampedLatitude");
 
     // Calculate the y-coordinate in the SVG based on the latitude
     double y = officeHeight - ((clampedLatitude - minLatitude) / (maxLatitude - minLatitude)) * officeHeight;
-    Log.e("Latitude: $latitude, Calculated Y: $y");
+    // Log.e("Latitude: $latitude, Calculated Y: $y");
     return y;
   }
 
@@ -371,9 +372,16 @@ class SvgPathFindingModel with ChangeNotifier {
     svgBuffer.write('<rect x="0" y="0" width="$svgWidth" height="$svgHeight" fill="none" stroke="black" stroke-width="2"/>');
     svgBuffer.write('<g id="gedge">');
 
+    // Split the path into vertices
+    List<String> pathVertices = path.split(' to ');
+
     for (var edge in edges) {
+      String edgeColor = 'grey';
+      if (pathVertices.contains(edge.from.label) && pathVertices.contains(edge.to.label)) {
+        edgeColor = 'red'; // Highlight edges in the path
+      }
       svgBuffer.write(
-        '<line x1="${edge.from.x}" y1="${edge.from.y}" x2="${edge.to.x}" y2="${edge.to.y}" stroke="blue" stroke-width="2"/>',
+        '<line x1="${edge.from.x}" y1="${edge.from.y}" x2="${edge.to.x}" y2="${edge.to.y}" stroke="$edgeColor" stroke-width="2"/>',
       );
     }
 
@@ -381,8 +389,22 @@ class SvgPathFindingModel with ChangeNotifier {
     svgBuffer.write('<g id="gvertex">');
 
     for (var vertex in vertices) {
+      String color = 'grey';
+      if (clickedVertices.isNotEmpty) {
+        if (vertex.label == clickedVertices.first) {
+          color = 'blue';
+        }
+        if (vertex.label == clickedVertices.last) {
+          color = 'green';
+        }
+      }
+
+      if (pathVertices.contains(vertex.label)) {
+        color = 'red'; // Highlight vertices in the path
+      }
+
       svgBuffer.write(
-        '<circle cx="${vertex.x}" cy="${vertex.y}" r="10" fill="grey"/><text x="${vertex.x}" y="${vertex.y}" font-size="10" text-anchor="middle" fill="white">${vertex.label}</text>',
+        '<circle cx="${vertex.x}" cy="${vertex.y}" r="10" fill="$color"/><text x="${vertex.x}" y="${vertex.y}" font-size="10" text-anchor="middle" fill="white">${vertex.label}</text>',
       );
     }
 
