@@ -25,3 +25,10 @@ class Edge {
     return 'Edge(from: $from, to: $to, cost: $cost)';
   }
 }
+
+class LatLng {
+  final double latitude;
+  final double longitude;
+
+  LatLng(this.latitude, this.longitude);
+}

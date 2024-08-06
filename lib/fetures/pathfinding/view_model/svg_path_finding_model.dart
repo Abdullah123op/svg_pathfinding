@@ -38,12 +38,15 @@ class SvgPathFindingModel with ChangeNotifier {
   String path = '';
 
   Position? currentPosition;
+  Vertex? yourLocation;
 
-  // Define the geographic boundaries of your office
-  final double minLatitude = 22.991990;
-  final double maxLatitude = 22.992444;
-  final double minLongitude = 72.496957;
-  final double maxLongitude = 72.497742;
+// Define the updated geographic boundaries of your office
+  final double minLatitude = 22.991873;
+  final double maxLatitude = 22.992666;
+  final double minLongitude = 72.496691;
+  final double maxLongitude = 72.497777;
+
+  Offset offset = const Offset(10, 10);
 
   // This function will call in the initState of stateful widget
   void initModel(BuildContext context) {
@@ -81,7 +84,6 @@ class SvgPathFindingModel with ChangeNotifier {
     // final String svgString = await DefaultAssetBundle.of(context).loadString(svgAssetPath);
     // currentSvgContent = svgString; // Initialize with the original SVG content
     updateSvg();
-    notifyListeners();
   }
 
   void onTapDown(TapDownDetails details) {
@@ -334,36 +336,70 @@ class SvgPathFindingModel with ChangeNotifier {
     ).listen((Position position) {
       Log.e("Current position: ${position.latitude}, ${position.longitude}");
       currentPosition = position;
-      notifyListeners();
+      getYourLocation();
+      latLongToPosition(currentPosition!.latitude, currentPosition!.longitude);
     });
   }
 
-  double calculateX(double longitude) {
-    // Office dimensions in pixels
-    double officeWidth = svgWidth; // Width of your SVG in pixels
+  void getYourLocation() {
+    if (currentPosition == null) {
+      Log.e("Current position is null.");
+      return;
+    }
 
-    // Clamp the longitude to the defined boundaries
-    double clampedLongitude = longitude.clamp(minLongitude, maxLongitude);
-    // Log.e("Clamped Longitude: $clampedLongitude");
+    // // Calculate X and Y positions from current latitude and longitude
+    // double currentX = calculateX(currentPosition!.longitude);
+    // double currentY = calculateY(currentPosition!.latitude);
 
-    // Calculate the x-coordinate in the SVG based on the longitude
-    double x = ((clampedLongitude - minLongitude) / (maxLongitude - minLongitude)) * officeWidth;
-    // Log.e("Longitude: $longitude, Calculated X: $x");
-    return x;
+    // Find the nearest vertex
+    Vertex? nearestVertex;
+    double minDistance = double.infinity;
+
+    for (var vertex in vertices) {
+      double distance = sqrt(pow(vertex.x - offset.dx, 2) + pow(vertex.y - offset.dy, 2));
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestVertex = vertex;
+      }
+    }
+
+    if (nearestVertex != null) {
+      Log.e('Nearest vertex: ${nearestVertex.label} at (${nearestVertex.x}, ${nearestVertex.y})');
+      yourLocation = nearestVertex;
+    } else {
+      Log.e('No nearby vertex found.');
+      yourLocation = null;
+    }
+    updateSvg();
+
+    notifyListeners();
   }
 
-  double calculateY(double latitude) {
-    // Office dimensions in pixels
-    double officeHeight = svgHeight; // Height of your SVG in pixels
+  latLongToPosition(double lat, double lng) {
+    // Define the bounds of your SVG image in terms of lat/lng
+    const double minLat = 22.991951;
+    const double maxLat = 22.992654;
+    const double minLng = 72.496709;
+    const double maxLng = 72.497835;
 
-    // Clamp the latitude to the defined boundaries
-    double clampedLatitude = latitude.clamp(minLatitude, maxLatitude);
-    // Log.e("Clamped Latitude: $clampedLatitude");
+    // Aspect ratio of the lat/lng bounds
+    double latRange = maxLat - minLat;
+    double lngRange = maxLng - minLng;
 
-    // Calculate the y-coordinate in the SVG based on the latitude
-    double y = officeHeight - ((clampedLatitude - minLatitude) / (maxLatitude - minLatitude)) * officeHeight;
-    // Log.e("Latitude: $latitude, Calculated Y: $y");
-    return y;
+    // Calculate the position on the SVG
+    double x = (lng - minLng) / lngRange * svgHeight;
+    double y = svgWidth - (lat - minLat) / latRange * svgWidth;
+
+    // Rotate coordinates by 90 degrees
+    double rotatedX = y + 50;
+    double rotatedY = svgHeight - x;
+
+    // Ensure coordinates stay within the bounds of the image
+    rotatedX = rotatedX.clamp(0.0, svgWidth - 20);
+    rotatedY = rotatedY.clamp(0.0, svgHeight - 20);
+    Log.e('$rotatedY $rotatedX');
+
+    offset = Offset(rotatedX, rotatedY);
   }
 
   void updateSvg() {
@@ -401,6 +437,9 @@ class SvgPathFindingModel with ChangeNotifier {
 
       if (pathVertices.contains(vertex.label)) {
         color = 'red'; // Highlight vertices in the path
+      }
+      if (vertex == yourLocation) {
+        color = 'green';
       }
 
       svgBuffer.write(
