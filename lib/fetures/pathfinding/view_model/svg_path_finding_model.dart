@@ -397,7 +397,7 @@ class SvgPathFindingModel with ChangeNotifier {
     // Ensure coordinates stay within the bounds of the image
     rotatedX = rotatedX.clamp(0.0, svgWidth - 20);
     rotatedY = rotatedY.clamp(0.0, svgHeight - 20);
-    Log.e('$rotatedY $rotatedX');
+    // Log.e('$rotatedY $rotatedX');
 
     offset = Offset(rotatedX, rotatedY);
   }
@@ -416,6 +416,9 @@ class SvgPathFindingModel with ChangeNotifier {
       if (pathVertices.contains(edge.from.label) && pathVertices.contains(edge.to.label)) {
         edgeColor = 'red'; // Highlight edges in the path
       }
+      svgBuffer.write(
+        '<line x1="${edge.from.x}" y1="${edge.from.y}" x2="${edge.to.x}" y2="${edge.to.y}" stroke="white" stroke-width="4"/>',
+      );
       svgBuffer.write(
         '<line x1="${edge.from.x}" y1="${edge.from.y}" x2="${edge.to.x}" y2="${edge.to.y}" stroke="$edgeColor" stroke-width="2"/>',
       );
@@ -443,7 +446,8 @@ class SvgPathFindingModel with ChangeNotifier {
       }
 
       svgBuffer.write(
-        '<circle cx="${vertex.x}" cy="${vertex.y}" r="10" fill="$color"/><text x="${vertex.x}" y="${vertex.y}" font-size="10" text-anchor="middle" fill="white">${vertex.label}</text>',
+        '<circle cx="${vertex.x}" cy="${vertex.y}" r="10" fill="$color" stroke="white" stroke-width="1"/>'
+        '<text x="${vertex.x}" y="${vertex.y}" font-size="10" text-anchor="middle" fill="white">${vertex.label}</text>',
       );
     }
 

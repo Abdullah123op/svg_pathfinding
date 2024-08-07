@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:svg_pathfinding/fetures/pathfinding/model/edges_vertex_workmode.dart';
@@ -59,14 +62,23 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                                 height: svgHeight,
                                 fit: BoxFit.contain,
                               ),
-                              Positioned(
-                                left: provider.offset.dx,
-                                top: provider.offset.dy,
-                                child: const Icon(
-                                  Icons.location_on_rounded,
-                                  color: Color(0xFFFF0F00),
+                              Align(
+                                alignment: Alignment.topLeft,
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 15, top: 5),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_circle_up_outlined,
+                                    color: Colors.white,
+                                    size: 35,
+                                  ),
                                 ),
                               ),
+                              Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
                               if (provider.workMode == WorkMode.findRoute)
                                 ...provider.vertexPositions.entries.map((entry) {
                                   return Positioned(
@@ -98,9 +110,7 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                 'Your Location :- ${provider.yourLocation?.label}',
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(
-                height: 30,
-              ),
+              const SizedBox(height: 30),
               Text(
                 provider.path,
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
@@ -150,6 +160,72 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
           );
         }),
       ),
+    );
+  }
+
+  Widget buildBlueDot() {
+    return StreamBuilder<CompassEvent>(
+      stream: FlutterCompass.events,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error reading heading: ${snapshot.error}');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        double direction = snapshot.data!.heading!;
+        double adjustedAngle = direction;
+
+        adjustedAngle = (direction - 130) * (math.pi / 180);
+        // if (direction >= 0 && direction < 130) {
+        //   adjustedAngle = (direction - 130) * (math.pi / 180);
+        // } else if (direction >= 130 && direction < 215) {
+        //   adjustedAngle = (direction - 215) * (math.pi / 180);
+        // } else if (direction >= 215 && direction < 315) {
+        //   adjustedAngle = (direction - 315) * (math.pi / 180);
+        // } else {
+        //   adjustedAngle = (direction - 35) * (math.pi / 180);
+        // }
+
+        // if direction is null, then device does not support this sensor
+        // show error message
+        if (direction == null) {
+          return const Center(
+            child: Text("Device does not have sensors !"),
+          );
+        }
+
+        return Material(
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          elevation: 4.0,
+          child: Container(
+            width: 25.0,
+            height: 25.0,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 2.0,
+              ),
+            ),
+            child: Transform.rotate(
+              angle: adjustedAngle,
+              child: const Icon(
+                Icons.navigation, // Use navigation icon to represent direction
+                color: Colors.white,
+                size: 13.0, // Adjust icon size as needed
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
