@@ -181,7 +181,7 @@ class _DijkstraHomePageState extends State<DijkstraHomePage> {
       if (selectedVertex == null) {
         selectedVertex = vertex;
       } else {
-        final edge = Edge(selectedVertex!, vertex, edgeCost);
+        final edge = Edge(selectedVertex!, vertex);
         Log.e('Adding edge: $edge');
         setState(() {
           edges.add(edge);
@@ -218,7 +218,7 @@ class _DijkstraHomePageState extends State<DijkstraHomePage> {
     final edgeElements = edges.map((e) {
       return '''
 <line x1="${e.from.x}" y1="${e.from.y}" x2="${e.to.x}" y2="${e.to.y}" stroke="darkgrey" stroke-width="6" />
-<text x="${(e.from.x + e.to.x) / 2}" y="${(e.from.y + e.to.y) / 2}" text-anchor="middle" alignment-baseline="central" font-size="20" fill="black">${e.cost}</text>
+<text x="${(e.from.x + e.to.x) / 2}" y="${(e.from.y + e.to.y) / 2}" text-anchor="middle" alignment-baseline="central" font-size="20" fill="black">"1"</text>
       ''';
     }).join();
 

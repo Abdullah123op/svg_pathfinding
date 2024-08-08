@@ -16,13 +16,12 @@ class Vertex {
 class Edge {
   final Vertex from;
   final Vertex to;
-  final int cost;
 
-  Edge(this.from, this.to, this.cost);
+  Edge(this.from, this.to);
 
   @override
   String toString() {
-    return 'Edge(from: $from, to: $to, cost: $cost)';
+    return 'Edge(from: $from, to: $to)';
   }
 }
 

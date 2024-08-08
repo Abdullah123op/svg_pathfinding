@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,9 @@ class SvgPathFindingScreen extends StatefulWidget {
 
 class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
   late SvgPathFindingModel _svgPathFindingModel;
+  final StreamController<double> _angleController = StreamController<double>.broadcast();
+
+  Stream<double> get angleStream => _angleController.stream;
 
   @override
   void didChangeDependencies() {
@@ -62,22 +66,35 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                                 height: svgHeight,
                                 fit: BoxFit.contain,
                               ),
-                              Align(
-                                alignment: Alignment.topLeft,
-                                child: Container(
-                                  margin: const EdgeInsets.only(left: 15, top: 5),
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                                  ),
-                                  child: const Icon(
-                                    Icons.arrow_circle_up_outlined,
-                                    color: Colors.white,
-                                    size: 35,
+                              if (provider.nearestVertex != null)
+                                Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Container(
+                                    height: 55,
+                                    width: 55,
+                                    margin: const EdgeInsets.only(left: 15, top: 5),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                                    ),
+                                    child: StreamBuilder<double>(
+                                        stream: angleStream,
+                                        builder: (context, snapshot) {
+                                          if (snapshot.data == null) {
+                                            return Container();
+                                          }
+                                          return Transform.rotate(
+                                            angle: snapshot.data!,
+                                            child: const Icon(
+                                              Icons.arrow_circle_up_outlined,
+                                              color: Colors.white,
+                                              size: 35,
+                                            ),
+                                          );
+                                        }),
                                   ),
                                 ),
-                              ),
                               Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
                               if (provider.workMode == WorkMode.findRoute)
                                 ...provider.vertexPositions.entries.map((entry) {
@@ -107,7 +124,7 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                 ),
               ),
               Text(
-                'Your Location :- ${provider.yourLocation?.label}',
+                'Your Location :- ${provider.nearestVertex?.label}',
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30),
@@ -149,11 +166,6 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                         provider.resetModel();
                       },
                       child: const Text('Clear')),
-                  TextButton(
-                      onPressed: () {
-                        provider.getYourLocation();
-                      },
-                      child: const Text('Get Your Location')),
                 ],
               ),
             ],
@@ -181,23 +193,9 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
         double adjustedAngle = direction;
 
         adjustedAngle = (direction - 130) * (math.pi / 180);
-        // if (direction >= 0 && direction < 130) {
-        //   adjustedAngle = (direction - 130) * (math.pi / 180);
-        // } else if (direction >= 130 && direction < 215) {
-        //   adjustedAngle = (direction - 215) * (math.pi / 180);
-        // } else if (direction >= 215 && direction < 315) {
-        //   adjustedAngle = (direction - 315) * (math.pi / 180);
-        // } else {
-        //   adjustedAngle = (direction - 35) * (math.pi / 180);
-        // }
 
-        // if direction is null, then device does not support this sensor
-        // show error message
-        if (direction == null) {
-          return const Center(
-            child: Text("Device does not have sensors !"),
-          );
-        }
+        double angle = _svgPathFindingModel.getDirection();
+        _angleController.add(angle);
 
         return Material(
           shape: const CircleBorder(),
