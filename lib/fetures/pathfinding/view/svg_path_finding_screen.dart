@@ -45,6 +45,10 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
           return Column(
             children: [
               Expanded(
+                  child: Container(
+                height: 50,
+              )),
+              Expanded(
                 child: Center(
                   child: GestureDetector(
                     onTapDown: provider.onTapDown,
@@ -67,35 +71,35 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                                 fit: BoxFit.contain,
                               ),
                               if (provider.nearestVertex != null)
-                                Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Container(
-                                    height: 55,
-                                    width: 55,
-                                    margin: const EdgeInsets.only(left: 15, top: 5),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                                    ),
-                                    child: StreamBuilder<double>(
-                                        stream: angleStream,
-                                        builder: (context, snapshot) {
-                                          if (snapshot.data == null) {
-                                            return Container();
-                                          }
-                                          return Transform.rotate(
-                                            angle: snapshot.data!,
-                                            child: const Icon(
-                                              Icons.arrow_circle_up_outlined,
-                                              color: Colors.white,
-                                              size: 35,
-                                            ),
-                                          );
-                                        }),
-                                  ),
-                                ),
-                              Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
+                                // Align(
+                                //   alignment: Alignment.topLeft,
+                                //   child: Container(
+                                //     height: 55,
+                                //     width: 55,
+                                //     margin: const EdgeInsets.only(left: 15, top: 5),
+                                //     padding: const EdgeInsets.all(8),
+                                //     decoration: const BoxDecoration(
+                                //       color: Colors.green,
+                                //       borderRadius: BorderRadius.all(Radius.circular(8)),
+                                //     ),
+                                //     child: StreamBuilder<double>(
+                                //         stream: angleStream,
+                                //         builder: (context, snapshot) {
+                                //           if (snapshot.data == null) {
+                                //             return Container();
+                                //           }
+                                //           return Transform.rotate(
+                                //             angle: snapshot.data!,
+                                //             child: const Icon(
+                                //               Icons.arrow_circle_up_outlined,
+                                //               color: Colors.white,
+                                //               size: 35,
+                                //             ),
+                                //           );
+                                //         }),
+                                //   ),
+                                // ),
+                                Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
                               if (provider.workMode == WorkMode.findRoute)
                                 ...provider.vertexPositions.entries.map((entry) {
                                   return Positioned(
@@ -118,55 +122,69 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
                             ],
                           ),
                         ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Your Location :- ${provider.nearestVertex?.label}',
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                                Text(
+                                  ' Path ${provider.path}',
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              ],
+                            ),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              // alignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Radio(
+                                  value: WorkMode.drawVertex,
+                                  groupValue: provider.workMode,
+                                  onChanged: (WorkMode? value) {
+                                    provider.setWorkMode(value!);
+                                  },
+                                ),
+                                const Text('Vertex'),
+                                Radio(
+                                  value: WorkMode.drawEdge,
+                                  groupValue: provider.workMode,
+                                  onChanged: (value) {
+                                    provider.setWorkMode(value!);
+                                  },
+                                ),
+                                const Text('Edge'),
+                                Radio(
+                                  value: WorkMode.findRoute,
+                                  groupValue: provider.workMode,
+                                  onChanged: (value) {
+                                    provider.setWorkMode(value!);
+                                  },
+                                ),
+                                const Text('Find R'),
+                                TextButton(
+                                    onPressed: () {
+                                      provider.resetModel();
+                                    },
+                                    child: const Text('Clear')),
+                                // TextButton(
+                                //     onPressed: () {
+                                //       provider.updateLocatorPosition();
+                                //     },
+                                //     child: const Text('Update locator')),
+                              ],
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),
                 ),
-              ),
-              Text(
-                'Your Location :- ${provider.nearestVertex?.label}',
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 30),
-              Text(
-                provider.path,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                // alignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Radio(
-                    value: WorkMode.drawVertex,
-                    groupValue: provider.workMode,
-                    onChanged: (WorkMode? value) {
-                      provider.setWorkMode(value!);
-                    },
-                  ),
-                  const Text('Draw vertex'),
-                  Radio(
-                    value: WorkMode.drawEdge,
-                    groupValue: provider.workMode,
-                    onChanged: (value) {
-                      provider.setWorkMode(value!);
-                    },
-                  ),
-                  const Text('Draw edge'),
-                  Radio(
-                    value: WorkMode.findRoute,
-                    groupValue: provider.workMode,
-                    onChanged: (value) {
-                      provider.setWorkMode(value!);
-                    },
-                  ),
-                  const Text('Find Route'),
-                  TextButton(
-                      onPressed: () {
-                        provider.resetModel();
-                      },
-                      child: const Text('Clear')),
-                ],
               ),
             ],
           );

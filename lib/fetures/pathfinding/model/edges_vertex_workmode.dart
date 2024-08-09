@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum WorkMode { drawVertex, drawEdge, setStart, delVertexEdge, setCostLabel, findRoute }
 
 class Vertex {
@@ -30,4 +32,11 @@ class LatLng {
   final double longitude;
 
   LatLng(this.latitude, this.longitude);
+}
+
+class EdgePosition {
+  final Offset start;
+  final Offset end;
+
+  EdgePosition({required this.start, required this.end});
 }

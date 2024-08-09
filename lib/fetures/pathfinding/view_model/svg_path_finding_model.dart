@@ -11,8 +11,6 @@ import 'package:svg_pathfinding/utils/logger.dart';
 import 'package:xml/xml.dart' as xml;
 
 class SvgPathFindingModel with ChangeNotifier {
-  String svgAssetPath = 'assets/sample_svg.svg';
-
   String svgString = '''
 <svg width="$svgWidth" height="$svgHeight" xmlns="http://www.w3.org/2000/svg">
  <rect x="0" y="0" width="$svgWidth" height="$svgHeight" fill="none" stroke="black" stroke-width="2"/>
@@ -41,13 +39,9 @@ class SvgPathFindingModel with ChangeNotifier {
   Position? currentPosition;
   Vertex? nearestVertex;
 
-// Define the updated geographic boundaries of your office
-  final double minLatitude = 22.991873;
-  final double maxLatitude = 22.992666;
-  final double minLongitude = 72.496691;
-  final double maxLongitude = 72.497777;
-
   Offset offset = const Offset(185, 300);
+
+  List<EdgePosition> edgePositions = [];
 
   // This function will call in the initState of stateful widget
   void initModel(BuildContext context) {
@@ -70,13 +64,22 @@ class SvgPathFindingModel with ChangeNotifier {
 
     vertices = [];
     edges = [];
-    startVertex = null;
-    selectedVertex = null;
+
+    startVertex;
+    selectedVertex;
     workMode = WorkMode.drawVertex;
+
+    // Store the edges
     findEdges = {};
+
+    // Store vertex positions
     vertexPositions = {};
     clickedVertices = [];
     path = '';
+    currentPosition = null;
+    nearestVertex = null;
+    offset = const Offset(185, 300);
+    edgePositions = [];
     notifyListeners();
   }
 
@@ -206,9 +209,59 @@ class SvgPathFindingModel with ChangeNotifier {
         }
         findEdges[startVertex]!.add(edge);
         findEdges[endVertex]!.add(edge); // Assuming undirected graph
+
+        // Store edge positions
+        edgePositions.add(EdgePosition(
+          start: Offset(x1, y1),
+          end: Offset(x2, y2),
+        ));
       }
     }
-    Log.e('Edges: $findEdges');
+    Log.e('Edges: $edgePositions');
+  }
+
+  updateLocatorPosition() {
+    const double thresholdDistance = 200.0;
+
+    for (var edge in edgePositions) {
+      double distance = calculateDistanceToLine(
+        offset,
+        edge.start,
+        edge.end,
+      );
+
+      if (distance < thresholdDistance) {
+        // Update locator position to the nearest point on the edge
+        offset = getNearestPointOnLine(offset, edge.start, edge.end);
+        break;
+      }
+    }
+
+    notifyListeners();
+  }
+
+  double calculateDistanceToLine(Offset point, Offset start, Offset end) {
+    final double dx = end.dx - start.dx;
+    final double dy = end.dy - start.dy;
+
+    final double t = ((point.dx - start.dx) * dx + (point.dy - start.dy) * dy) / (dx * dx + dy * dy);
+
+    final double nearestX = start.dx + t * dx;
+    final double nearestY = start.dy + t * dy;
+
+    return (Offset(nearestX, nearestY) - point).distance;
+  }
+
+  Offset getNearestPointOnLine(Offset point, Offset start, Offset end) {
+    final double dx = end.dx - start.dx;
+    final double dy = end.dy - start.dy;
+
+    final double t = ((point.dx - start.dx) * dx + (point.dy - start.dy) * dy) / (dx * dx + dy * dy);
+
+    return Offset(
+      start.dx + t * dx,
+      start.dy + t * dy,
+    );
   }
 
   String? getVertexId(double x, double y) {
@@ -344,11 +397,6 @@ class SvgPathFindingModel with ChangeNotifier {
       Log.e("Current position is null.");
       return;
     }
-
-    // Calculate X and Y positions from current latitude and longitude
-    // double currentX = calculateX(currentPosition!.longitude);
-    // double currentY = calculateY(currentPosition!.latitude);
-
     // Find the nearest vertex
     Vertex? nearestVertex;
     double minDistance = double.infinity;
