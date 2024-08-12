@@ -45,147 +45,126 @@ class _SvgPathFindingScreenState extends State<SvgPathFindingScreen> {
           return Column(
             children: [
               Expanded(
-                  child: Container(
-                height: 50,
-              )),
-              Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTapDown: provider.onTapDown,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/solitaire_floor_plan.svg',
-                                width: svgWidth,
-                                height: svgHeight,
-                                fit: BoxFit.cover,
-                              ),
-                              SvgPicture.string(
-                                provider.svgString,
-                                width: svgWidth,
-                                height: svgHeight,
-                                fit: BoxFit.contain,
-                              ),
-                              if (provider.nearestVertex != null)
-                                // Align(
-                                //   alignment: Alignment.topLeft,
-                                //   child: Container(
-                                //     height: 55,
-                                //     width: 55,
-                                //     margin: const EdgeInsets.only(left: 15, top: 5),
-                                //     padding: const EdgeInsets.all(8),
-                                //     decoration: const BoxDecoration(
-                                //       color: Colors.green,
-                                //       borderRadius: BorderRadius.all(Radius.circular(8)),
-                                //     ),
-                                //     child: StreamBuilder<double>(
-                                //         stream: angleStream,
-                                //         builder: (context, snapshot) {
-                                //           if (snapshot.data == null) {
-                                //             return Container();
-                                //           }
-                                //           return Transform.rotate(
-                                //             angle: snapshot.data!,
-                                //             child: const Icon(
-                                //               Icons.arrow_circle_up_outlined,
-                                //               color: Colors.white,
-                                //               size: 35,
-                                //             ),
-                                //           );
-                                //         }),
-                                //   ),
-                                // ),
-                                Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
-                              if (provider.workMode == WorkMode.findRoute)
-                                ...provider.vertexPositions.entries.map((entry) {
-                                  return Positioned(
-                                    left: entry.value.dx - 1, // Adjust for center alignment
-                                    top: entry.value.dy - 10, // Adjust for center alignment
-                                    child: GestureDetector(
-                                      onTap: () => provider.onVertexClick(entry.key),
-                                      child: Container(
-                                        width: 20,
-                                        height: 20,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.transparent,
-                                          border: Border.all(color: Colors.transparent),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                            ],
+                child: GestureDetector(
+                  onTapDown: provider.onTapDown,
+                  child: Stack(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/solitaire_floor_plan.svg',
+                        width: svgWidth,
+                        height: svgHeight,
+                        fit: BoxFit.cover,
+                      ),
+                      SvgPicture.string(
+                        provider.svgString,
+                        width: svgWidth,
+                        height: svgHeight,
+                        fit: BoxFit.contain,
+                      ),
+                      if (provider.nearestVertex != null)
+                        Container(
+                          height: 55,
+                          width: 55,
+                          margin: const EdgeInsets.only(left: 15, top: 5),
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
+                          child: StreamBuilder<double>(
+                              stream: angleStream,
+                              builder: (context, snapshot) {
+                                if (snapshot.data == null) {
+                                  return Container();
+                                }
+                                return Transform.rotate(
+                                  angle: snapshot.data!,
+                                  child: const Icon(
+                                    Icons.arrow_circle_up_outlined,
+                                    color: Colors.white,
+                                    size: 35,
+                                  ),
+                                );
+                              }),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Your Location :- ${provider.nearestVertex?.label}',
-                                  style: const TextStyle(color: Colors.black),
+                      Positioned(left: provider.offset.dx, top: provider.offset.dy, child: buildBlueDot()),
+                      if (provider.workMode == WorkMode.findRoute)
+                        ...provider.vertexPositions.entries.map((entry) {
+                          return Positioned(
+                            left: entry.value.dx - 10, // Adjust for center alignment
+                            top: entry.value.dy - 10, // Adjust for center alignment
+                            child: GestureDetector(
+                              onTap: () => provider.onVertexClick(entry.key),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.transparent,
+                                  border: Border.all(color: Colors.transparent),
                                 ),
-                                Text(
-                                  ' Path ${provider.path}',
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                              ],
+                              ),
                             ),
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              // alignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Radio(
-                                  value: WorkMode.drawVertex,
-                                  groupValue: provider.workMode,
-                                  onChanged: (WorkMode? value) {
-                                    provider.setWorkMode(value!);
-                                  },
-                                ),
-                                const Text('Vertex'),
-                                Radio(
-                                  value: WorkMode.drawEdge,
-                                  groupValue: provider.workMode,
-                                  onChanged: (value) {
-                                    provider.setWorkMode(value!);
-                                  },
-                                ),
-                                const Text('Edge'),
-                                Radio(
-                                  value: WorkMode.findRoute,
-                                  groupValue: provider.workMode,
-                                  onChanged: (value) {
-                                    provider.setWorkMode(value!);
-                                  },
-                                ),
-                                const Text('Find R'),
-                                TextButton(
-                                    onPressed: () {
-                                      provider.resetModel();
-                                    },
-                                    child: const Text('Clear')),
-                                // TextButton(
-                                //     onPressed: () {
-                                //       provider.updateLocatorPosition();
-                                //     },
-                                //     child: const Text('Update locator')),
-                              ],
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
+                          );
+                        }).toList(),
+                    ],
                   ),
                 ),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Your Location :- ${provider.nearestVertex?.label} , ',
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                  Text(
+                    ' Path ${provider.path}',
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                // alignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Radio(
+                    value: WorkMode.drawVertex,
+                    groupValue: provider.workMode,
+                    onChanged: (WorkMode? value) {
+                      provider.setWorkMode(value!);
+                    },
+                  ),
+                  const Text('Vertex'),
+                  Radio(
+                    value: WorkMode.drawEdge,
+                    groupValue: provider.workMode,
+                    onChanged: (value) {
+                      provider.setWorkMode(value!);
+                    },
+                  ),
+                  const Text('Edge'),
+                  Radio(
+                    value: WorkMode.findRoute,
+                    groupValue: provider.workMode,
+                    onChanged: (value) {
+                      provider.setWorkMode(value!);
+                    },
+                  ),
+                  const Text('Find R'),
+                  TextButton(
+                      onPressed: () {
+                        provider.resetModel();
+                      },
+                      child: const Text('Clear')),
+                  // TextButton(
+                  //     onPressed: () {
+                  //       provider.updateLocatorPosition();
+                  //     },
+                  //     child: const Text('Update locator')),
+                ],
+              )
             ],
           );
         }),
